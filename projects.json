@@ -1,0 +1,132 @@
+[
+  {
+    "id": "gameops-api",
+    "featured": true,
+    "title": "쿠폰·재화 지급 백엔드",
+    "repoName": "GameOps.Api",
+    "category": "백엔드",
+    "period": "2026-08",
+    "team": "개인 프로젝트",
+    "summary": "게임 이벤트 운영에서 생기는 동시성 정합성, 조회 성능, 신원 위조 문제를 직접 재현하고 수치로 검증해 해결한 API 서버입니다.",
+    "overview": "쿠폰 사용과 재화 지급이라는 단순한 도메인을 다루지만, 목표는 기능 구현이 아니라 트래픽이 몰릴 때 실제로 무엇이 깨지는지 재현하고 검증된 해결책을 적용하는 것이었습니다. 모든 수치는 직접 작성한 재현 스크립트와 k6 부하 테스트로 측정했습니다.",
+    "stack": ["C#", "ASP.NET Core", "MS SQL Server", "Dapper", "k6"],
+    "metrics": [
+      {
+        "label": "20만 건 규모 조회 처리량",
+        "beforeValue": 135, "afterValue": 7255,
+        "beforeText": "135 req/s", "afterText": "7,255 req/s",
+        "change": "약 54배 향상"
+      },
+      {
+        "label": "p95 응답시간",
+        "beforeValue": 1270, "afterValue": 14.48,
+        "beforeText": "1.27초", "afterText": "14.48ms",
+        "change": "약 88배 단축",
+        "lowerIsBetter": true
+      },
+      {
+        "label": "동시 요청 20건 중 쿠폰 사용 성공",
+        "beforeValue": 7, "afterValue": 1,
+        "beforeText": "7건", "afterText": "1건",
+        "change": "재화 3,500 과지급을 정상 500 지급으로",
+        "lowerIsBetter": true
+      },
+      {
+        "label": "동시 요청 시 서버 500 에러",
+        "beforeValue": 13, "afterValue": 0,
+        "beforeText": "13건", "afterText": "0건",
+        "change": "모두 정상 거부(409)로 처리",
+        "lowerIsBetter": true
+      }
+    ],
+    "highlights": [
+      {
+        "title": "동시 요청 시 쿠폰 중복 지급",
+        "problem": "사용 여부를 확인한 뒤 삽입하는 구조였습니다. 같은 쿠폰으로 20건을 동시에 보내자 7건이 성공해 재화 3,500이 과지급됐고, 중복 행 때문에 13건은 500 에러로 실패했습니다.",
+        "solution": "애플리케이션의 사전 확인만으로는 경합을 막을 수 없다고 보고 (CouponId, UserId)에 UNIQUE 제약을 최종 방어선으로 추가했습니다. 이어서 조회부터 지급까지를 하나의 트랜잭션으로 묶어 저장 프로시저로 옮겼습니다.",
+        "result": "같은 조건으로 다시 측정해 1건만 성공하고 19건은 409로 정상 거부되며, 500 에러는 0건임을 확인했습니다."
+      },
+      {
+        "title": "20만 건 규모의 조회 병목",
+        "problem": "실행 계획을 확인하니 쿠폰 코드 1건을 찾기 위해 20만 건 전체를 스캔하고 있었습니다(Clustered Index Scan).",
+        "solution": "조회가 잦고 쓰기가 드문 Code 컬럼에만 인덱스를 추가했습니다. 지급마다 INSERT가 일어나는 재화 원장 테이블에는 쓰기 비용을 고려해 적용하지 않았습니다.",
+        "result": "Index Seek으로 바뀌며 읽는 행 수가 200,006건에서 1건으로 줄었고, k6 부하 테스트(50 VU, 15초)에서 처리량이 약 54배 올랐습니다."
+      },
+      {
+        "title": "타인 식별자 도용(IDOR)",
+        "problem": "쿠폰 사용과 잔액 조회 API가 요청에 담긴 userId를 그대로 믿어, 다른 사용자로 위장할 수 있었습니다.",
+        "solution": "JWT로 먼저 해결했지만 즉시 무효화를 위해 매 요청 DB 조회가 필요해지면서 무상태 검증의 이점이 사라졌습니다. 단일 서버 규모에서는 세션이 더 단순하다고 판단해 세션 기반 인증으로 전환하고, 경로 화이트리스트 미들웨어로 이중 방어를 더했습니다.",
+        "result": "조작된 userId는 무시되고, 로그아웃 직후 같은 쿠키로 보낸 요청이 즉시 401로 차단되는 것을 확인했습니다."
+      }
+    ],
+    "links": [
+      { "label": "GitHub 저장소", "url": "https://github.com/dra2sun7/GameOps.Api" }
+    ]
+  },
+  {
+    "id": "security-log-pipeline",
+    "featured": true,
+    "title": "보안 로그 실시간 수집 SIEM 파이프라인",
+    "repoName": "security-log-pipeline",
+    "category": "데이터 인프라",
+    "period": "2026-06",
+    "team": "개인 프로젝트",
+    "summary": "웹 서버 로그를 Kafka 버퍼와 Logstash 가공을 거쳐 Elasticsearch와 Kibana로 관제하는 Docker 기반 파이프라인입니다.",
+    "overview": "운영 서버 부하를 최소화하면서 대용량 웹 트래픽 로그를 실시간으로 수집하고, 데이터가 폭주하거나 후단이 멈춰도 유실되지 않는 파이프라인을 구축했습니다. 한계를 예측으로 끝내지 않고 4단계 부하 테스트로 정량 검증했습니다.",
+    "stack": ["Docker", "Nginx", "Filebeat", "Apache Kafka", "Logstash", "Elasticsearch", "Kibana", "AKHQ"],
+    "metrics": [
+      {
+        "label": "최대 로그 수집 처리량",
+        "afterText": "12,214 TPS",
+        "note": "Apache Bench 동시성 100 기준"
+      },
+      {
+        "label": "종단 간 데이터 유실률",
+        "afterText": "0.00%",
+        "note": "10,000건 주입 후 Elasticsearch에서 전수 검증"
+      },
+      {
+        "label": "10만 건 순수 가공 시간",
+        "beforeValue": 6, "afterValue": 3,
+        "beforeText": "6초", "afterText": "3초",
+        "beforeLabel": "Grok", "afterLabel": "JSON",
+        "change": "2배 빠름",
+        "lowerIsBetter": true
+      },
+      {
+        "label": "가공 엔진 중단 시 Kafka 대기열",
+        "beforeValue": 15000, "afterValue": 0,
+        "beforeText": "15,000건", "afterText": "0건",
+        "beforeLabel": "중단 중", "afterLabel": "재가동",
+        "change": "유실 없이 전량 처리",
+        "lowerIsBetter": true
+      }
+    ],
+    "highlights": [
+      {
+        "title": "후단 장애 시 로그 유실",
+        "problem": "가공 엔진이 멈추거나 트래픽이 폭주하면 수집된 로그가 유실되고, 그 부담이 웹 서버까지 번질 위험이 있었습니다.",
+        "solution": "Filebeat와 Logstash 사이에 Kafka를 버퍼 계층으로 두어 수집과 가공을 분리했습니다.",
+        "result": "Logstash를 강제로 중단한 상태에서 15,000건이 Kafka에 안전하게 쌓였고, 재가동 후 1건의 유실 없이 대기열이 0으로 수렴했습니다. 그동안 웹 서버 가용성은 100% 유지됐습니다."
+      },
+      {
+        "title": "정규식 파싱 비용",
+        "problem": "텍스트 로그를 Grok 정규식으로 파싱하는 연산이 가공 단계의 부담이었습니다.",
+        "solution": "Nginx가 처음부터 JSON으로 로그를 남기도록 바꿔 전 구간 포맷을 통일했습니다. 저장소를 끊는 Null Output 실험과 타임스탬프 추적으로 약 17초의 고정 기동 시간을 분리해 순수 가공 시간만 비교했습니다.",
+        "result": "10만 건 가공 시간이 6초에서 3초로 줄었고, 전체 처리 속도를 좌우하는 병목이 Elasticsearch의 디스크 쓰기 버퍼라는 점까지 파악했습니다."
+      },
+      {
+        "title": "과도한 메모리 점유",
+        "problem": "기본 설정의 Elasticsearch가 기동 직후 호스트 메모리의 61%(2.343GiB)를 차지했습니다.",
+        "solution": "Elasticsearch와 Logstash의 JVM 힙을 1GB로 고정하도록 튜닝했습니다.",
+        "result": "메모리 사용량을 약 35% 이상 줄였고, 고부하 상황에서도 OOM 없이 동작함을 확인했습니다."
+      }
+    ],
+    "links": [
+      { "label": "GitHub 저장소", "url": "https://github.com/dra2sun7/security-log-pipeline" },
+      { "label": "성능 검증 문서", "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/BENCHMARK_TEST.md" },
+      { "label": "트러블슈팅 문서", "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/TROUBLE_SHOOTING.md" },
+      { "label": "이중화 설계 제안서", "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/HA_ARCHITECTURE_PLAN.md" }
+    ]
+  }
+]

@@ -1,1 +1,187 @@
-<h1>Hello<h1>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>포트폴리오</title>
+  <meta name="description" content="직접 재현하고 수치로 검증한 백엔드와 데이터 인프라 프로젝트 모음">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <noscript><p class="load-error">이 페이지는 JavaScript가 필요합니다.</p></noscript>
+
+  <div id="app" v-cloak>
+    <p v-if="loadError" class="load-error" role="alert">{{ loadError }}</p>
+
+    <header v-if="profile" class="intro">
+      <h1>{{ profile.name }}</h1>
+      <p class="role">{{ profile.role }}</p>
+      <p class="lede">{{ profile.intro }}</p>
+      <ul class="contact">
+        <li v-for="link in profile.links" :key="link.url">
+          <a :href="link.url" target="_blank" rel="noopener">{{ link.label }}</a>
+        </li>
+      </ul>
+    </header>
+
+    <main v-if="projects.length">
+      <section class="projects" aria-labelledby="projects-title">
+        <div class="section-head">
+          <h2 id="projects-title">대표 프로젝트</h2>
+          <div class="segmented" role="group" aria-label="보기 방식">
+            <button type="button" :aria-pressed="view === 'cards'" @click="view = 'cards'">자세히</button>
+            <button type="button" :aria-pressed="view === 'table'" @click="view = 'table'">표</button>
+          </div>
+        </div>
+
+        <div class="filters" role="group" aria-label="분야 필터">
+          <button v-for="c in categories" :key="c" type="button" class="chip"
+                  :aria-pressed="category === c" @click="category = c">{{ c }}</button>
+          <button v-if="stack" type="button" class="chip chip-clear" @click="stack = ''">
+            {{ stack }} 사용 프로젝트만 보는 중, 해제
+          </button>
+        </div>
+
+        <p v-if="!visible.length" class="empty">
+          조건에 맞는 프로젝트가 없습니다.
+          <button type="button" class="text-button" @click="resetFilters">필터 초기화</button>
+        </p>
+
+        <!-- 자세히 보기 -->
+        <div v-if="view === 'cards'" class="project-list">
+          <article v-for="p in visible" :key="p.id" class="project">
+            <div class="project-text">
+              <p class="meta">
+                <span>{{ p.category }}</span>
+                <span>{{ p.period }}</span>
+                <span>{{ p.team }}</span>
+              </p>
+              <h3>{{ p.title }}</h3>
+              <p class="repo">{{ p.repoName }}</p>
+              <p class="summary">{{ p.summary }}</p>
+              <ul class="stack" aria-label="사용 기술">
+                <li v-for="s in p.stack" :key="s">
+                  <button type="button" class="tag" :aria-pressed="stack === s"
+                          :title="s + ' 사용 프로젝트만 보기'" @click="toggleStack(s)">{{ s }}</button>
+                </li>
+              </ul>
+              <div class="actions">
+                <button type="button" class="btn" @click="openDetail(p)">문제 해결 과정 보기</button>
+                <a class="btn btn-quiet" :href="p.links[0].url" target="_blank" rel="noopener">{{ p.links[0].label }}</a>
+              </div>
+            </div>
+
+            <div class="ledger">
+              <h4>검증 결과</h4>
+              <dl>
+                <div v-for="m in p.metrics" :key="m.label" class="metric">
+                  <dt>{{ m.label }}</dt>
+                  <dd v-if="m.beforeText">
+                    <div class="bar-row">
+                      <span class="bar-label">{{ m.beforeLabel || '개선 전' }}</span>
+                      <span class="track"><span class="bar bar-before" :style="{ width: barWidth(m, 'before') }"></span></span>
+                      <span class="bar-value">{{ m.beforeText }}</span>
+                    </div>
+                    <div class="bar-row">
+                      <span class="bar-label">{{ m.afterLabel || '개선 후' }}</span>
+                      <span class="track"><span class="bar bar-after" :style="{ width: barWidth(m, 'after') }"></span></span>
+                      <span class="bar-value strong">{{ m.afterText }}</span>
+                    </div>
+                    <p class="change">{{ m.change }}</p>
+                  </dd>
+                  <dd v-else>
+                    <p class="single">{{ m.afterText }}</p>
+                    <p class="change">{{ m.note }}</p>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </article>
+        </div>
+
+        <!-- 표로 보기 -->
+        <div v-else-if="visible.length" class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">프로젝트</th>
+                <th scope="col">분야</th>
+                <th scope="col">기간</th>
+                <th scope="col">핵심 기술</th>
+                <th scope="col">대표 성과</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in visible" :key="p.id">
+                <td class="cell-title">
+                  <button type="button" class="text-button strong" @click="openDetail(p)">{{ p.title }}</button>
+                  <a class="cell-repo" :href="p.links[0].url" target="_blank" rel="noopener">{{ p.repoName }}</a>
+                </td>
+                <td>{{ p.category }}</td>
+                <td>{{ p.period }}</td>
+                <td>{{ p.stack.join(', ') }}</td>
+                <td>
+                  <ul class="plain">
+                    <li v-for="m in p.metrics.slice(0, 2)" :key="m.label">
+                      {{ m.label }}: {{ m.beforeText ? m.beforeText + ' → ' + m.afterText : m.afterText }}
+                    </li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section v-if="others.length" class="others" aria-labelledby="others-title">
+        <h2 id="others-title">그 밖의 프로젝트</h2>
+        <ul>
+          <li v-for="p in others" :key="p.id">
+            <a :href="p.links[0].url" target="_blank" rel="noopener">{{ p.title }}</a>
+            <span>{{ p.summary }}</span>
+          </li>
+        </ul>
+      </section>
+
+      <section v-if="profile && profile.skills" class="skills" aria-labelledby="skills-title">
+        <h2 id="skills-title">기술 스택</h2>
+        <dl>
+          <div v-for="g in profile.skills" :key="g.group">
+            <dt>{{ g.group }}</dt>
+            <dd>{{ g.items.join(', ') }}</dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+
+    <footer v-if="profile" class="site-footer">
+      <p>{{ profile.name }}</p>
+      <a v-for="link in profile.links" :key="link.url" :href="link.url" target="_blank" rel="noopener">{{ link.label }}</a>
+    </footer>
+
+    <dialog ref="dialogEl" class="detail" aria-labelledby="detail-title" @close="selected = null" @click="onDialogClick">
+      <div v-if="selected" class="detail-body">
+        <div class="detail-head">
+          <h3 id="detail-title">{{ selected.title }}</h3>
+          <button type="button" class="text-button" @click="closeDetail">닫기</button>
+        </div>
+        <p class="overview">{{ selected.overview }}</p>
+        <section v-for="h in selected.highlights" :key="h.title" class="case">
+          <h4>{{ h.title }}</h4>
+          <dl>
+            <dt>문제</dt><dd>{{ h.problem }}</dd>
+            <dt>해결</dt><dd>{{ h.solution }}</dd>
+            <dt>검증</dt><dd>{{ h.result }}</dd>
+          </dl>
+        </section>
+        <div class="actions">
+          <a v-for="l in selected.links" :key="l.url" class="btn btn-quiet" :href="l.url" target="_blank" rel="noopener">{{ l.label }}</a>
+        </div>
+      </div>
+    </dialog>
+  </div>
+</body>
+</html>
