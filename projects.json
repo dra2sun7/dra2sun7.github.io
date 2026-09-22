@@ -68,7 +68,7 @@
     "featured": true,
     "title": "보안 로그 실시간 수집 SIEM 파이프라인",
     "repoName": "security-log-pipeline",
-    "category": "데이터 인프라",
+    "category": "데이터 플랫폼",
     "period": "2026-06",
     "team": "개인 프로젝트",
     "summary": "웹 서버 로그를 Kafka 버퍼와 Logstash 가공을 거쳐 Elasticsearch와 Kibana로 관제하는 Docker 기반 파이프라인입니다.",
