@@ -5,36 +5,50 @@
     "title": "쿠폰·재화 지급 백엔드",
     "repoName": "GameOps.Api",
     "category": "백엔드",
-    "period": "2026-08",
+    "period": "기간을 입력하세요",
     "team": "개인 프로젝트",
     "summary": "동시 요청 20건 중 7건이 성공해 재화가 과지급되던 쿠폰 시스템을 1건만 성공하도록 고치고, 20만 건 조회 처리량을 54배 끌어올리고, userId만 바꾸면 타인 행세가 가능했던 인증 취약점을 막은 API 서버입니다.",
     "overview": "쿠폰 사용과 재화 지급이라는 단순한 도메인을 다루지만, 목표는 기능 구현이 아니라 트래픽이 몰릴 때 실제로 무엇이 깨지는지 재현하고 검증된 해결책을 적용하는 것이었습니다. 모든 수치는 직접 작성한 재현 스크립트와 k6 부하 테스트로 측정했습니다.",
-    "stack": ["C#", "ASP.NET Core", "MS SQL Server", "Dapper", "k6"],
+    "stack": [
+      "C#",
+      "ASP.NET Core",
+      "MS SQL Server",
+      "Dapper",
+      "k6"
+    ],
     "metrics": [
       {
         "label": "20만 건 규모 조회 처리량",
-        "beforeValue": 135, "afterValue": 7255,
-        "beforeText": "135 req/s", "afterText": "7,255 req/s",
+        "beforeValue": 135,
+        "afterValue": 7255,
+        "beforeText": "135 req/s",
+        "afterText": "7,255 req/s",
         "change": "약 54배 향상"
       },
       {
         "label": "p95 응답시간",
-        "beforeValue": 1270, "afterValue": 14.48,
-        "beforeText": "1.27초", "afterText": "14.48ms",
+        "beforeValue": 1270,
+        "afterValue": 14.48,
+        "beforeText": "1.27초",
+        "afterText": "14.48ms",
         "change": "약 88배 단축",
         "lowerIsBetter": true
       },
       {
         "label": "동시 요청 20건 중 쿠폰 사용 성공",
-        "beforeValue": 7, "afterValue": 1,
-        "beforeText": "7건", "afterText": "1건",
+        "beforeValue": 7,
+        "afterValue": 1,
+        "beforeText": "7건",
+        "afterText": "1건",
         "change": "재화 3,500 과지급을 정상 500 지급으로",
         "lowerIsBetter": true
       },
       {
         "label": "동시 요청 시 서버 500 에러",
-        "beforeValue": 13, "afterValue": 0,
-        "beforeText": "13건", "afterText": "0건",
+        "beforeValue": 13,
+        "afterValue": 0,
+        "beforeText": "13건",
+        "afterText": "0건",
         "change": "모두 정상 거부(409)로 처리",
         "lowerIsBetter": true
       }
@@ -60,7 +74,10 @@
       }
     ],
     "links": [
-      { "label": "GitHub 저장소", "url": "https://github.com/dra2sun7/GameOps.Api" }
+      {
+        "label": "GitHub 저장소",
+        "url": "https://github.com/dra2sun7/GameOps.Api"
+      }
     ]
   },
   {
@@ -69,11 +86,20 @@
     "title": "보안 로그 실시간 수집 SIEM 파이프라인",
     "repoName": "security-log-pipeline",
     "category": "데이터 플랫폼",
-    "period": "2026-06",
+    "period": "기간을 입력하세요",
     "team": "개인 프로젝트",
     "summary": "가공 엔진이 멈춰도 로그가 유실되지 않도록 Kafka를 버퍼로 두어 초당 12,214건까지 안전하게 처리하고, 정규식 파싱을 JSON으로 바꿔 가공 시간을 절반으로, 메모리 사용량을 35% 이상 줄인 실시간 로그 파이프라인입니다.",
     "overview": "운영 서버 부하를 최소화하면서 대용량 웹 트래픽 로그를 실시간으로 수집하고, 데이터가 폭주하거나 후단이 멈춰도 유실되지 않는 파이프라인을 구축했습니다. 한계를 예측으로 끝내지 않고 4단계 부하 테스트로 정량 검증했습니다.",
-    "stack": ["Docker", "Nginx", "Filebeat", "Apache Kafka", "Logstash", "Elasticsearch", "Kibana", "AKHQ"],
+    "stack": [
+      "Docker",
+      "Nginx",
+      "Filebeat",
+      "Apache Kafka",
+      "Logstash",
+      "Elasticsearch",
+      "Kibana",
+      "AKHQ"
+    ],
     "metrics": [
       {
         "label": "최대 로그 수집 처리량",
@@ -87,17 +113,23 @@
       },
       {
         "label": "10만 건 순수 가공 시간",
-        "beforeValue": 6, "afterValue": 3,
-        "beforeText": "6초", "afterText": "3초",
-        "beforeLabel": "Grok", "afterLabel": "JSON",
+        "beforeValue": 6,
+        "afterValue": 3,
+        "beforeText": "6초",
+        "afterText": "3초",
+        "beforeLabel": "Grok",
+        "afterLabel": "JSON",
         "change": "2배 빠름",
         "lowerIsBetter": true
       },
       {
         "label": "가공 엔진 중단 시 Kafka 대기열",
-        "beforeValue": 15000, "afterValue": 0,
-        "beforeText": "15,000건", "afterText": "0건",
-        "beforeLabel": "중단 중", "afterLabel": "재가동",
+        "beforeValue": 15000,
+        "afterValue": 0,
+        "beforeText": "15,000건",
+        "afterText": "0건",
+        "beforeLabel": "중단 중",
+        "afterLabel": "재가동",
         "change": "유실 없이 전량 처리",
         "lowerIsBetter": true
       }
@@ -123,10 +155,111 @@
       }
     ],
     "links": [
-      { "label": "GitHub 저장소", "url": "https://github.com/dra2sun7/security-log-pipeline" },
-      { "label": "성능 검증 문서", "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/BENCHMARK_TEST.md" },
-      { "label": "트러블슈팅 문서", "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/TROUBLE_SHOOTING.md" },
-      { "label": "이중화 설계 제안서", "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/HA_ARCHITECTURE_PLAN.md" }
+      {
+        "label": "GitHub 저장소",
+        "url": "https://github.com/dra2sun7/security-log-pipeline"
+      },
+      {
+        "label": "성능 검증 문서",
+        "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/BENCHMARK_TEST.md"
+      },
+      {
+        "label": "트러블슈팅 문서",
+        "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/TROUBLE_SHOOTING.md"
+      },
+      {
+        "label": "이중화 설계 제안서",
+        "url": "https://github.com/dra2sun7/security-log-pipeline/blob/main/docs/HA_ARCHITECTURE_PLAN.md"
+      }
+    ]
+  },
+  {
+    "id": "logstash-benchmark",
+    "featured": true,
+    "title": "Logstash Worker 수에 따른 성능과 집계 정합성 벤치마크",
+    "repoName": "logstash_benchmark",
+    "category": "데이터 플랫폼",
+    "period": "기간을 입력하세요",
+    "team": "개인 프로젝트",
+    "summary": "방화벽 로그 약 100만 건을 20초 단위로 집계하는 ELK 파이프라인에서 Worker를 1, 4, 8개로 늘려 측정한 벤치마크입니다. Worker 4개 이후 처리 시간이 줄지 않는 원인이 하드웨어가 아니라 집계 필터의 잠금 구조임을 밝혀냈고, Worker를 늘리면 20초 윈도우 통계가 왜곡된다는 사실을 실측으로 확인했습니다.",
+    "overview": "Worker를 늘리면 빨라질 것이라는 가정을 검증하기 위해, 캐시 초기화와 CPU 코어 전용 할당으로 변인을 통제한 뒤 Worker 1, 4, 8에서 처리 속도, CPU, 메모리, JVM, 디스크 I/O와 집계 결과를 비교했습니다. 병목 가설을 하나씩 기각하며 원인을 좁혀 갔고, 한계를 넘기 위한 대안으로 Kafka와 Flink 기반 아키텍처와 단계별 전환 계획까지 제안했습니다.",
+    "stack": [
+      "Logstash",
+      "Elasticsearch",
+      "Kibana",
+      "Metricbeat",
+      "Docker"
+    ],
+    "metrics": [
+      {
+        "label": "로그 유입 소요 시간",
+        "beforeValue": 210,
+        "afterValue": 70,
+        "beforeText": "210초",
+        "afterText": "70초",
+        "beforeLabel": "Worker 1",
+        "afterLabel": "Worker 4",
+        "change": "3배 빨라짐",
+        "lowerIsBetter": true
+      },
+      {
+        "label": "전체 처리 시간",
+        "beforeValue": 90,
+        "afterValue": 90,
+        "beforeText": "90초",
+        "afterText": "90초",
+        "beforeLabel": "Worker 4",
+        "afterLabel": "Worker 8",
+        "change": "Worker를 2배로 늘려도 개선 없음",
+        "lowerIsBetter": true
+      },
+      {
+        "label": "Worker 1개당 CPU 활용률",
+        "beforeValue": 94.4,
+        "afterValue": 44.5,
+        "beforeText": "94.4%",
+        "afterText": "44.5%",
+        "beforeLabel": "Worker 1",
+        "afterLabel": "Worker 8",
+        "change": "CPU가 남는데도 워커끼리 서로를 기다림"
+      },
+      {
+        "label": "집계로 줄인 이벤트 수",
+        "beforeValue": 999999,
+        "afterValue": 552904,
+        "beforeText": "999,999건",
+        "afterText": "552,904건",
+        "beforeLabel": "원본",
+        "afterLabel": "집계 후",
+        "change": "약 44.7% 축소, 이벤트 총합은 그대로 보존",
+        "lowerIsBetter": true
+      }
+    ],
+    "highlights": [
+      {
+        "title": "Worker를 늘려도 빨라지지 않는 이유",
+        "problem": "Worker를 4개에서 8개로 늘렸는데 전체 처리 시간은 90초로 같았고, 유입 시간도 70초에서 60초로 14%만 줄었습니다.",
+        "solution": "유입 구간과 유입 후 잔여 처리 구간을 나눠 분석하고, CPU, 디스크, Elasticsearch를 병목 후보로 두고 하나씩 확인했습니다. Worker 8의 최대 CPU는 할당량의 57%, 디스크 읽기는 NVMe 성능의 1% 미만이라 하드웨어 가설은 모두 기각했습니다.",
+        "result": "Worker 1개당 CPU 활용률이 94.4%, 63.8%, 44.5%로 떨어지는 것에서, 집계 필터의 상태 맵을 한 번에 한 워커만 쓸 수 있는 잠금 구조가 병목임을 규명했습니다."
+      },
+      {
+        "title": "Worker 증설이 집계 결과를 왜곡하는 문제",
+        "problem": "세 경우 모두 이벤트 총합은 999,999건으로 같았지만, 20초 윈도우에 이벤트가 몇 건씩 담기는지의 분포가 Worker 수에 따라 달라졌습니다.",
+        "solution": "윈도우 크기별 분포를 비교하고, 로그 시각을 기준으로 만료를 판정하는 집계 필터가 병렬 처리로 이벤트 순서가 섞이면 만료 판정이 밀린다는 원리를 분석했습니다.",
+        "result": "Worker 8에서 1~2건짜리 윈도우가 약 26,300개 줄고 3건 이상 윈도우가 약 9,200개 늘어난 것을 확인해, 공식 문서가 Worker 1 고정을 권고하는 근거를 실측으로 재현했습니다. 이 값이 포트 스캔 같은 공격 탐지 기준으로 쓰일 수 있다는 점에서 성능보다 정합성이 더 큰 위험이라고 결론 내렸습니다."
+      },
+      {
+        "title": "입력보다 3건 많게 들어온 데이터",
+        "problem": "원본 로그는 100만 건인데 파이프라인에는 1,000,003건이 유입됐고, 그중 4건이 형식 오류였습니다.",
+        "solution": "파싱 단계마다 실패 원인을 태깅해 원인별 파일로 격리하도록 구성했고, 격리된 4건을 분석해 확장자로는 단일 압축처럼 보인 입력 파일이 실제로는 이중 압축이라 아카이브 헤더가 로그로 읽혔다는 것을 찾아냈습니다.",
+        "result": "완전히 압축 해제한 원본이 정확히 100만 건임을 확인했고, 형식 검증 단계가 잘못된 데이터를 파싱 전에 전량 차단해 통계 오염을 막았다는 점도 검증했습니다."
+      }
+    ],
+    "links": [
+      {
+        "label": "GitHub 저장소",
+        "url": "https://github.com/dra2sun7/logstash_benchmark"
+      }
     ]
   }
 ]
