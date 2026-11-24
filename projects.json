@@ -1,5 +1,83 @@
 [
   {
+    "id": "mini-cloud-gitops",
+    "featured": true,
+    "title": "승인과 검증을 넣은 GitOps 배포 파이프라인",
+    "repoName": "mini-cloud-gitops",
+    "category": "CI/CD·GitOps",
+    "period": "2026.11",
+    "team": "개인 프로젝트",
+    "summary": "IaaS 형태의 API를 대상으로 GitLab CI, Helm, ArgoCD로 np는 자동 배포 후 검증하고 pr은 MR 승인으로 승격하는 GitOps 파이프라인을 구성했습니다. 실패를 일부러 넣어 각 관문이 실제로 막는지 확인하고, 그 과정에서 찾은 문제 3건을 고쳐 다시 검증했습니다.",
+    "overview": "금융권 배포에서 요구되는 승인, 검증, 변경 기록을 파이프라인 안에 넣는 것을 목표로 했습니다. 앱 저장소와 배포 저장소를 나눠 CI는 Git에만 쓰고 클러스터는 ArgoCD만 바꾸도록 했고, 한 번 빌드한 이미지를 np에서 검증한 뒤 같은 태그로 pr에 승격합니다. 스테이징이 없는 구조를 고려해 np에 배포된 컨테이너에 전체 테스트를 다시 실행하고, 통과한 경우에만 승격 MR을 만듭니다. 롤백도 Git revert MR로 처리해 승인과 기록이 남게 했습니다.",
+    "stack": [
+      "GitLab CI",
+      "GitLab Runner",
+      "Docker",
+      "Helm",
+      "ArgoCD",
+      "Kubernetes (kind)",
+      "yq",
+      "pytest"
+    ],
+    "metrics": [
+      {
+        "label": "배포 중 실패한 요청",
+        "beforeValue": 3,
+        "afterValue": 0,
+        "beforeText": "3 / 2,412",
+        "afterText": "0 / 2,422",
+        "beforeLabel": "수정 전",
+        "afterLabel": "preStop 적용 후",
+        "change": "0.2초 간격 측정, 성공률 99.88% → 100%"
+      },
+      {
+        "label": "실패 주입 실험",
+        "afterText": "4 / 4 차단",
+        "note": "코드 오류, 설정 오류, 승인 거부, 롤백이 각각 의도한 관문에서 막힘"
+      },
+      {
+        "label": "push부터 np 배포 후 검증까지",
+        "afterText": "약 6분",
+        "note": "테스트, 빌드, 배포 설정 수정, 반영 대기, 배포 후 테스트 포함"
+      },
+      {
+        "label": "실험 중 발견하고 고친 문제",
+        "afterText": "3건",
+        "note": "검증 시점 판단, 배포 저장소 검증, 배포 중 요청 끊김"
+      }
+    ],
+    "highlights": [
+      {
+        "title": "검증이 배포가 끝나기 전에 시작됨",
+        "problem": "설정 오류를 복구한 직후 배포 후 검증을 다시 실행했는데 또 실패했습니다. 검증은 이미지 태그가 바뀌었는지로 배포 완료를 판단했는데, 설정만 바뀐 경우 태그가 그대로라 ArgoCD가 반영하기 전의 깨진 상태를 검사했습니다.",
+        "solution": "판단 기준을 ArgoCD가 배포 저장소의 최신 커밋을 반영했는지, Synced인지, Healthy인지로 바꿨습니다. Synced만 보면 ArgoCD가 아직 새 커밋을 모를 때 예전 커밋 기준으로 Synced라고 답하기 때문에 커밋 번호까지 비교했습니다.",
+        "result": "같은 상황을 재현했을 때 검증이 깨진 설정의 커밋을 감지해 기다렸고, 복구 커밋이 반영된 뒤에 테스트를 시작했습니다. 정상 배포에서도 이전 커밋 기준의 Synced 상태를 건너뛰는 것을 로그로 확인했습니다."
+      },
+      {
+        "title": "배포 저장소 변경은 검증을 거치지 않음",
+        "problem": "배포 저장소의 np 설정에 잘못된 값을 넣자, 앱 파이프라인이 돌기도 전에 np pod가 죽기 시작했습니다. 관문은 모두 앱 저장소 파이프라인에 있는데 ArgoCD는 배포 저장소만 보기 때문입니다.",
+        "solution": "Helm 차트에 values 스키마를 추가해 값의 형식을 정했습니다. ArgoCD도 내부에서 helm template으로 차트를 조립하므로, 형식이 틀린 값은 조립 단계에서 거부됩니다.",
+        "result": "같은 값을 다시 넣었을 때 ArgoCD가 ComparisonError로 적용을 거부했고, 새 pod는 만들어지지 않았으며 기존 pod가 그대로 서비스했습니다."
+      },
+      {
+        "title": "정상 배포 중 요청 3건이 끊김",
+        "problem": "배포하는 동안 0.2초마다 요청을 보내 측정하자, 잘못된 설정을 배포할 때는 실패가 없었지만 오히려 정상 배포에서 1초 안에 연결 실패 3건이 나왔습니다. 기존 pod가 내려가는 시점과 같았습니다.",
+        "solution": "Kubernetes가 pod 종료 신호와 트래픽 제외를 동시에 처리해, 네트워크 규칙이 바뀌기 전에 앱이 먼저 꺼지는 틈이 원인이었습니다. 종료 신호를 받은 뒤 5초 기다리도록 preStop을 추가했습니다.",
+        "result": "같은 방법으로 다시 측정한 결과 요청 2,422건 중 실패 0건이었습니다. 로컬 환경에서 1회 측정한 결과라는 한계를 함께 기록했습니다."
+      }
+    ],
+    "links": [
+      {
+        "label": "GitHub 저장소",
+        "url": "https://github.com/dra2sun7/mini-cloud-gitops"
+      },
+      {
+        "label": "GitLab 파이프라인 기록",
+        "url": "https://gitlab.com/mini-cloud-group/mini-cloud-app/-/pipelines"
+      }
+    ]
+  },
+  {
     "id": "mini-cloud-qa",
     "featured": true,
     "title": "클라우드 IaaS API 품질 검증",
